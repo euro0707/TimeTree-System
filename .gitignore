@@ -1,0 +1,13 @@
+﻿# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+
+# 依存/ビルド
+node_modules/
+dist/
+build/
+
+# 秘密情報
+.env
+.env.*

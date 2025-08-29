@@ -1,0 +1,105 @@
+[tool.poetry]
+name = "timetree-auto-notifier"
+version = "2.0.0"
+description = "TimeTree自動通知システム - TimeTree-Exporterを使用した自動取得とLINE通知"
+authors = ["TimeTree Auto Notifier <admin@example.com>"]
+readme = "README.md"
+packages = [{include = "timetree_notifier", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+# TimeTree-Exporter (インストール済み前提)
+timetree-exporter = "^0.6.1"
+# 基本ライブラリ
+requests = "^2.31.0"
+icalendar = "^6.1.0"
+pydantic = "^2.4.2"
+python-dotenv = "^1.0.0"
+# ログ・監視
+loguru = "^0.7.2"
+# スケジュール・非同期
+apscheduler = "^3.10.4"
+# エラーハンドリング
+tenacity = "^8.2.3"
+# 設定管理
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.1"
+pytest-mock = "^3.11.1"
+black = "^23.7.0"
+ruff = "^0.0.286"
+mypy = "^1.5.1"
+coverage = "^7.3.0"
+
+[tool.poetry.scripts]
+timetree-auto-notifier = "timetree_notifier.main:main"
+timetree-notifier = "timetree_notifier.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"

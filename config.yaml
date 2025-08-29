@@ -1,0 +1,52 @@
+# TimeTree毎朝通知システム設定
+
+# メイン機能：毎朝の定時通知
+daily_summary:
+  enabled: true
+  time: "06:00"  # 毎朝6時に通知
+  timezone: "Asia/Tokyo"
+  
+  # 通知内容設定
+  include_description: true
+  include_location: true
+  max_events_display: 10
+  
+  # 予定なしの場合
+  notify_when_no_events: true
+  no_events_message: "今日は予定がありません\nゆっくりとした一日をお過ごしください！"
+
+# TimeTree設定
+timetree:
+  email: "${TIMETREE_EMAIL}"
+  password: "${TIMETREE_PASSWORD}"
+  calendar_code: "jUDDi-7ww775"  # メインカレンダー（2441件の予定あり）
+  
+  # TimeTree-Exporter設定
+  exporter:
+    timeout: 120
+    retry_count: 3
+    retry_delay: 30
+
+# LINE通知設定  
+notification:
+  line_channel_access_token: "${LINE_CHANNEL_ACCESS_TOKEN}"
+  line_user_id: "${LINE_USER_ID}"
+  max_message_length: 1000
+  
+  # メッセージテンプレート
+  greeting: "🌅 おはようございます！今日の予定"
+  closing: "今日も良い一日を！✨"
+  footer: "TimeTree自動通知"
+
+# ログ設定
+logging:
+  level: "INFO"
+  file: "./logs/daily_notifier.log"
+  max_size: "10MB"
+  rotation: 7
+
+# パス設定
+paths:
+  temp_ics: "./temp/timetree_export.ics"
+  backup_data: "./data/backup.ics"
+  logs: "./logs"

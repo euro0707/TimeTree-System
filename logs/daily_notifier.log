@@ -1,0 +1,269 @@
+2025-08-28 05:07:24 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-28 05:07:24 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-28 05:07:24 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-28 05:07:24 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-28 05:07:24 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-28 05:07:24 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-28 05:07:24 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-28 05:27:45 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:_log_configuration:50 - Daily notification time: 06:00
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:_log_configuration:52 - Include description: True
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:_log_configuration:53 - Include location: True
+2025-08-28 05:27:45 | INFO     | timetree_notifier.main:_log_configuration:54 - Max events display: 10
+2025-08-28 21:23:23 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-28 21:23:23 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-28 21:23:23 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-28 21:23:23 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-28 21:23:23 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-28 21:23:23 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-28 21:23:23 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-28 21:23:23 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-28 21:23:23 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-28 21:23:23 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-28 21:23:23 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-28
+2025-08-28 21:23:24 | ERROR    | timetree_notifier.core.daily_notifier:send_daily_summary:40 - TimeTree export failed: 2025-08-28 21:23:24 [ERROR] Login failed: {"error":{"code":-702,"message":"failed to api request","params":{}}} 
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Scripts\timetree-exporter.exe\__main__.py", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 141, in main
+    events = get_events(email, password, args.calendar_code)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 22, in get_events
+    session_id = login(email, password)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\api\auth.py", line 33, in login
+    raise AuthenticationError("Login failed")
+timetree_exporter.api.auth.AuthenticationError: Login failed
+
+2025-08-28 21:23:25 | ERROR    | __main__:run_manual_notification:109 - Manual notification failed
+2025-08-28 21:23:25 | ERROR    | __main__:run_manual:184 - Manual notification failed
+2025-08-28 21:37:49 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-28 21:37:49 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-28 21:37:49 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-28 21:37:49 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-28 21:37:49 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-28 21:37:49 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-28 21:37:49 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-28 21:37:49 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-28 21:37:49 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-28 21:37:49 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-28 21:37:49 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-28
+2025-08-28 21:37:49 | ERROR    | timetree_notifier.core.daily_notifier:send_daily_summary:40 - TimeTree export failed: 2025-08-28 21:37:49 [ERROR] Login failed: {"error":{"code":-702,"message":"failed to api request","params":{}}} 
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Scripts\timetree-exporter.exe\__main__.py", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 141, in main
+    events = get_events(email, password, args.calendar_code)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 22, in get_events
+    session_id = login(email, password)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\api\auth.py", line 33, in login
+    raise AuthenticationError("Login failed")
+timetree_exporter.api.auth.AuthenticationError: Login failed
+
+2025-08-28 21:37:50 | ERROR    | __main__:run_manual_notification:109 - Manual notification failed
+2025-08-28 21:37:50 | ERROR    | __main__:run_manual:184 - Manual notification failed
+2025-08-29 05:25:22 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:25:22 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:25:22 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:25:22 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:25:22 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:25:22 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:25:22 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:39:17 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:39:17 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:39:17 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:39:17 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:39:17 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:39:17 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:39:17 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:39:17 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 05:39:17 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 05:39:17 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 05:39:17 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 05:39:18 | ERROR    | timetree_notifier.core.daily_notifier:send_daily_summary:40 - TimeTree export failed: 2025-08-29 05:39:18 [ERROR] Login failed: {"error":{"code":-702,"message":"failed to api request","params":{}}} 
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 172, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 141, in main
+    events = get_events(email, password, args.calendar_code)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 22, in get_events
+    session_id = login(email, password)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\api\auth.py", line 33, in login
+    raise AuthenticationError("Login failed")
+timetree_exporter.api.auth.AuthenticationError: Login failed
+
+2025-08-29 05:39:19 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 05:39:19 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 05:40:57 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:40:57 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:40:57 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:40:57 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:40:57 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:40:57 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:40:57 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:40:57 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 05:40:57 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 05:40:57 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 05:40:57 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 05:40:58 | ERROR    | timetree_notifier.core.daily_notifier:send_daily_summary:40 - TimeTree export failed: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 172, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 141, in main
+    events = get_events(email, password, args.calendar_code)
+  File "C:\Users\skyeu\AppData\Local\Programs\Python\Python313\Lib\site-packages\timetree_exporter\__main__.py", line 63, in get_events
+    input("Which Calendar(s) do you want to export? (Default to 1): ") or "1"
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
+
+2025-08-29 05:40:58 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 05:40:58 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 05:48:59 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:48:59 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:48:59 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:48:59 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:48:59 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:48:59 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:48:59 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:48:59 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 05:48:59 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 05:48:59 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 05:48:59 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 05:49:00 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 0 events for 2025-08-29
+2025-08-29 05:49:00 | ERROR    | timetree_notifier.core.daily_notifier:send_daily_summary:62 - Unexpected error in daily summary: 'DailySummaryConfig' object has no attribute 'greeting'
+2025-08-29 05:49:01 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 05:49:01 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 05:49:49 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:49:49 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:49:49 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:49:49 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:49:49 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:49:49 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:49:49 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:49:49 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 05:49:49 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 05:49:49 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 05:49:49 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 05:49:50 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 0 events for 2025-08-29
+2025-08-29 05:49:51 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 05:49:51 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 05:49:51 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 05:53:17 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:53:17 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:53:17 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:53:17 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:53:17 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:53:17 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:53:17 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:53:17 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 05:53:17 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 05:53:17 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 05:53:17 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 05:53:18 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 0 events for 2025-08-29
+2025-08-29 05:53:18 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 05:53:19 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 05:53:19 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 05:53:26 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:53:26 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:53:26 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:53:26 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:53:26 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:53:26 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:53:26 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:56:03 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 05:56:03 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 05:56:03 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 05:56:03 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 05:56:03 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 05:56:03 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 05:56:03 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 05:56:03 | INFO     | __main__:start:63 - Starting TimeTree Notifier...
+2025-08-29 05:56:03 | INFO     | timetree_notifier.core.scheduler:_setup_daily_schedule:86 - Daily summary job scheduled: 06:00 Asia/Tokyo
+2025-08-29 05:56:03 | INFO     | timetree_notifier.core.scheduler:start:38 - TimeTree scheduler started successfully
+2025-08-29 05:56:03 | INFO     | timetree_notifier.core.scheduler:start:39 - Daily notification scheduled at 06:00
+2025-08-29 05:56:03 | INFO     | __main__:start:69 - TimeTree Notifier started successfully
+2025-08-29 05:56:03 | INFO     | __main__:start:74 - Next notification scheduled at: 2025-08-29T06:00:00+09:00
+2025-08-29 05:56:03 | INFO     | __main__:run_daemon:158 - TimeTree Notifier is running. Press Ctrl+C to stop.
+2025-08-29 06:00:00 | INFO     | timetree_notifier.core.scheduler:_execute_daily_summary:91 - Starting daily summary execution
+2025-08-29 06:00:00 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 06:00:01 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 0 events for 2025-08-29
+2025-08-29 06:00:01 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 06:00:01 | INFO     | timetree_notifier.core.scheduler:_execute_daily_summary:96 - Daily summary completed successfully
+2025-08-29 06:12:52 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 06:12:52 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 06:12:52 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 06:12:52 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 06:12:52 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 06:12:52 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 06:12:52 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 06:12:52 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 06:12:52 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 06:12:52 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 06:12:52 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 06:12:59 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 2 events for 2025-08-29
+2025-08-29 06:12:59 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 06:12:59 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 06:12:59 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 06:17:03 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 06:17:03 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 06:17:03 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 06:17:03 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 06:17:03 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 06:17:03 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 06:17:03 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 06:17:03 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 06:17:03 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 06:17:03 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 06:17:03 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 06:17:09 | ERROR    | timetree_notifier.core.daily_notifier:_extract_today_events:170 - Failed to parse ICS file: can't compare offset-naive and offset-aware datetimes
+2025-08-29 06:17:10 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 06:17:10 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 06:17:10 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 06:17:40 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 06:17:40 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 06:17:40 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 06:17:40 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 06:17:40 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 06:17:40 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 06:17:40 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 06:17:40 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 06:17:40 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 06:17:40 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 06:17:40 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 06:17:46 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:174 - Extracted 4 events for 2025-08-29
+2025-08-29 06:17:46 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 06:17:46 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 06:17:46 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 06:19:47 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 06:19:47 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 06:19:47 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 06:19:47 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 06:19:47 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 06:19:47 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 06:19:47 | INFO     | __main__:_log_configuration:54 - Max events display: 10
+2025-08-29 06:19:47 | INFO     | __main__:run_manual:177 - Running manual notification...
+2025-08-29 06:19:47 | INFO     | __main__:run_manual_notification:103 - Running manual notification...
+2025-08-29 06:19:47 | INFO     | timetree_notifier.core.scheduler:run_manual_summary:106 - Running manual daily summary
+2025-08-29 06:19:47 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-08-29
+2025-08-29 06:19:54 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:174 - Extracted 4 events for 2025-08-29
+2025-08-29 06:19:54 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-08-29
+2025-08-29 06:19:54 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
+2025-08-29 06:19:54 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-08-29 06:28:51 | INFO     | timetree_notifier.utils.logger:setup_logging:43 - Logging configured: level=INFO, file=./logs/daily_notifier.log
+2025-08-29 06:28:51 | INFO     | __main__:initialize:41 - TimeTree Notifier initialized successfully
+2025-08-29 06:28:51 | INFO     | __main__:_log_configuration:50 - Daily notification time: 06:00
+2025-08-29 06:28:51 | INFO     | __main__:_log_configuration:51 - Timezone: Asia/Tokyo
+2025-08-29 06:28:51 | INFO     | __main__:_log_configuration:52 - Include description: True
+2025-08-29 06:28:51 | INFO     | __main__:_log_configuration:53 - Include location: True
+2025-08-29 06:28:51 | INFO     | __main__:_log_configuration:54 - Max events display: 10
