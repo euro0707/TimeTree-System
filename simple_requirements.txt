@@ -1,0 +1,8 @@
+# TimeTree Simple Notifier - 最小依存関係
+# 必須パッケージのみ
+
+# HTTP通信
+requests>=2.28.0,<3.0.0
+
+# 日時処理 (標準ライブラリで十分だが安定性のため)
+python-dateutil>=2.8.0,<3.0.0
