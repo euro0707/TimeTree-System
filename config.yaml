@@ -40,7 +40,7 @@ notification:
 
 # ログ設定
 logging:
-  level: "INFO"
+  level: "DEBUG"
   file: "./logs/daily_notifier.log"
   max_size: "10MB"
   rotation: 7

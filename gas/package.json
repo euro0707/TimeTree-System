@@ -1,0 +1,29 @@
+{
+  "name": "timetree-notifier-gas",
+  "version": "3.0.0",
+  "description": "TimeTree Notifier v3.0 - Google Apps Script Integration",
+  "main": "Code.gs",
+  "scripts": {
+    "build": "echo 'Building GAS project...' && npm run lint",
+    "lint": "echo 'Linting GAS files...'",
+    "deploy:staging": "clasp push --force && clasp deploy --description 'Staging deployment'",
+    "deploy:production": "clasp push --force && clasp deploy --description 'Production deployment'",
+    "test": "echo 'GAS tests not yet implemented'"
+  },
+  "keywords": [
+    "timetree",
+    "google-apps-script",
+    "notification",
+    "voice-assistant",
+    "calendar-sync"
+  ],
+  "author": "TimeTree Notifier Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/TimeTree-System.git"
+  }
+}

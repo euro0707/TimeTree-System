@@ -145,20 +145,38 @@ class DailySummaryNotifier:
     def _extract_today_events(self, ics_file: Path, target_date: date) -> List[Event]:
         """ICSファイルから今日の予定を抽出"""
         events = []
+        total_events = 0
         
         try:
             with open(ics_file, 'rb') as f:
                 calendar = Calendar.from_ical(f.read())
             
+            logger.info(f"Processing ICS file for date: {target_date}")
+            
             for component in calendar.walk():
                 if component.name == "VEVENT":
+                    total_events += 1
                     try:
+                        # デバッグ用：全イベントの概要をログ出力
+                        summary = str(component.get('summary', 'No title'))
+                        dtstart = component.get('dtstart')
+                        if dtstart:
+                            start_time = dtstart.dt
+                            if hasattr(start_time, 'date'):
+                                event_date = start_time.date()
+                            else:
+                                event_date = start_time
+                            logger.debug(f"Processing event: {summary}, Date: {event_date}, Target: {target_date}")
+                        
                         event = self._parse_event_component(component, target_date)
                         if event:
                             events.append(event)
+                            logger.debug(f"Event matched target date: {event.title}")
                     except Exception as e:
                         logger.warning(f"Failed to parse event: {e}")
                         continue
+            
+            logger.info(f"Processed {total_events} total events, found {len(events)} events for {target_date}")
             
             # 時間順でソート（タイムゾーンを考慮）
             def sort_key(event):

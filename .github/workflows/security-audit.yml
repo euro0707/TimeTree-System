@@ -1,0 +1,317 @@
+name: Security Audit & Compliance Check
+
+on:
+  schedule:
+    # 毎週月曜日 午前2時 (JST) に実行
+    - cron: '0 17 * * 0'  # UTC Sunday 17:00 = JST Monday 02:00
+  
+  workflow_dispatch:
+    inputs:
+      audit_level:
+        description: 'Audit level (basic/comprehensive)'
+        required: false
+        default: 'basic'
+      
+      send_report:
+        description: 'Send audit report to Slack'
+        required: false
+        default: 'true'
+
+env:
+  AUDIT_TIMESTAMP: ${{ github.run_number }}-${{ github.run_attempt }}
+
+jobs:
+  security-audit:
+    name: Security Audit & Compliance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive audit
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      
+      - name: Install Security Tools
+        run: |
+          pip install bandit safety pip-audit
+          npm install -g npm-audit
+      
+      - name: Create Audit Directory
+        run: mkdir -p security-audit-results
+      
+      - name: Code Security Scan (Bandit)
+        run: |
+          echo "::group::Python Security Scan"
+          bandit -r src/ -f json -o security-audit-results/bandit-report.json || true
+          bandit -r src/ -f txt -o security-audit-results/bandit-report.txt || true
+          
+          # サマリー出力
+          echo "### Bandit Security Scan Results" >> security-audit-results/summary.md
+          if [ -f security-audit-results/bandit-report.txt ]; then
+            echo "\`\`\`" >> security-audit-results/summary.md
+            tail -10 security-audit-results/bandit-report.txt >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+          fi
+          echo "::endgroup::"
+      
+      - name: Dependency Vulnerability Scan
+        run: |
+          echo "::group::Dependency Security Scan"
+          
+          # Python dependencies
+          if [ -f requirements.txt ]; then
+            safety check -r requirements.txt --json --output security-audit-results/safety-report.json || true
+            pip-audit --format=json --output=security-audit-results/pip-audit-report.json || true
+            
+            echo "### Dependency Vulnerability Scan Results" >> security-audit-results/summary.md
+            echo "- Safety scan completed" >> security-audit-results/summary.md
+            echo "- Pip-audit scan completed" >> security-audit-results/summary.md
+          fi
+          
+          # Node.js dependencies (if any)
+          if [ -f gas/package.json ]; then
+            cd gas
+            npm audit --json > ../security-audit-results/npm-audit-report.json || true
+            cd ..
+            echo "- NPM audit scan completed" >> security-audit-results/summary.md
+          fi
+          
+          echo "::endgroup::"
+      
+      - name: Secrets Detection Scan
+        run: |
+          echo "::group::Secrets Detection"
+          
+          # Git historyでの秘密情報検索
+          git log --all --full-history --grep="password\|token\|key\|secret" \
+            --oneline > security-audit-results/potential-secrets-in-history.txt || true
+          
+          # 現在のコードベースでの検索
+          grep -r -i -n --include="*.py" --include="*.js" --include="*.yml" --include="*.yaml" \
+            -E "(password|token|key|secret|api_key)" . > security-audit-results/potential-secrets-in-code.txt || true
+          
+          # 結果のサマリー
+          echo "### Secrets Detection Results" >> security-audit-results/summary.md
+          
+          if [ -s security-audit-results/potential-secrets-in-history.txt ]; then
+            echo "⚠️ Potential secrets found in git history" >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+            head -5 security-audit-results/potential-secrets-in-history.txt >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+          else
+            echo "✅ No obvious secrets found in git history" >> security-audit-results/summary.md
+          fi
+          
+          if [ -s security-audit-results/potential-secrets-in-code.txt ]; then
+            echo "⚠️ Potential secrets found in codebase" >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+            head -5 security-audit-results/potential-secrets-in-code.txt >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+          else
+            echo "✅ No obvious secrets found in current codebase" >> security-audit-results/summary.md
+          fi
+          
+          echo "::endgroup::"
+      
+      - name: GitHub Actions Security Check
+        run: |
+          echo "::group::GitHub Actions Security Check"
+          
+          # ワークフローファイルの検証
+          find .github/workflows -name "*.yml" -o -name "*.yaml" | while read workflow; do
+            echo "Checking workflow: $workflow" >> security-audit-results/workflow-security.txt
+            
+            # 危険なパターンの検索
+            if grep -q "pull_request_target" "$workflow"; then
+              echo "⚠️ WARNING: pull_request_target found in $workflow" >> security-audit-results/workflow-security.txt
+            fi
+            
+            if grep -q "\${{ github.event.pull_request.head.repo.full_name }}" "$workflow"; then
+              echo "⚠️ WARNING: Potentially unsafe PR input in $workflow" >> security-audit-results/workflow-security.txt
+            fi
+            
+            if grep -q "actions/checkout@" "$workflow"; then
+              if ! grep -q "actions/checkout@v4" "$workflow"; then
+                echo "ℹ️ INFO: Consider updating checkout action in $workflow" >> security-audit-results/workflow-security.txt
+              fi
+            fi
+          done
+          
+          echo "### GitHub Actions Security Check" >> security-audit-results/summary.md
+          if [ -f security-audit-results/workflow-security.txt ]; then
+            echo "\`\`\`" >> security-audit-results/summary.md
+            cat security-audit-results/workflow-security.txt >> security-audit-results/summary.md
+            echo "\`\`\`" >> security-audit-results/summary.md
+          fi
+          
+          echo "::endgroup::"
+      
+      - name: Permission & Access Control Audit
+        run: |
+          echo "::group::Permission Audit"
+          
+          # GitHub Actions権限の確認
+          echo "### GitHub Actions Permissions Audit" >> security-audit-results/summary.md
+          echo "" >> security-audit-results/summary.md
+          
+          find .github/workflows -name "*.yml" -o -name "*.yaml" | while read workflow; do
+            echo "**Workflow: $(basename $workflow)**" >> security-audit-results/summary.md
+            
+            if grep -q "permissions:" "$workflow"; then
+              echo "✅ Explicit permissions defined" >> security-audit-results/summary.md
+              grep -A 10 "permissions:" "$workflow" | head -10 >> security-audit-results/summary.md
+            else
+              echo "⚠️ No explicit permissions - using default" >> security-audit-results/summary.md
+            fi
+            echo "" >> security-audit-results/summary.md
+          done
+          
+          echo "::endgroup::"
+      
+      - name: Generate Security Score
+        run: |
+          echo "::group::Security Score Calculation"
+          
+          python3 << 'EOF'
+          import json
+          import os
+          
+          # セキュリティスコア計算
+          score = 100
+          issues = []
+          
+          # Bandit結果の確認
+          if os.path.exists('security-audit-results/bandit-report.json'):
+              try:
+                  with open('security-audit-results/bandit-report.json', 'r') as f:
+                      bandit_data = json.load(f)
+                      high_issues = len([m for m in bandit_data.get('results', []) if m.get('issue_severity') == 'HIGH'])
+                      medium_issues = len([m for m in bandit_data.get('results', []) if m.get('issue_severity') == 'MEDIUM'])
+                      
+                      score -= high_issues * 10
+                      score -= medium_issues * 5
+                      
+                      if high_issues > 0:
+                          issues.append(f"{high_issues} high-severity security issues")
+                      if medium_issues > 0:
+                          issues.append(f"{medium_issues} medium-severity security issues")
+              except:
+                  pass
+          
+          # Secrets検出の確認
+          if os.path.exists('security-audit-results/potential-secrets-in-code.txt'):
+              if os.path.getsize('security-audit-results/potential-secrets-in-code.txt') > 0:
+                  score -= 15
+                  issues.append("Potential secrets detected in codebase")
+          
+          if os.path.exists('security-audit-results/potential-secrets-in-history.txt'):
+              if os.path.getsize('security-audit-results/potential-secrets-in-history.txt') > 0:
+                  score -= 10
+                  issues.append("Potential secrets detected in git history")
+          
+          # 最低スコアは0
+          score = max(0, score)
+          
+          # 結果の保存
+          security_report = {
+              "audit_timestamp": "${{ env.AUDIT_TIMESTAMP }}",
+              "security_score": score,
+              "issues": issues,
+              "status": "PASS" if score >= 80 else "FAIL" if score < 50 else "WARNING"
+          }
+          
+          with open('security-audit-results/security-score.json', 'w') as f:
+              json.dump(security_report, f, indent=2)
+          
+          # サマリーに追加
+          with open('security-audit-results/summary.md', 'a') as f:
+              f.write(f"\n## Security Score: {score}/100\n")
+              f.write(f"**Status: {security_report['status']}**\n\n")
+              
+              if issues:
+                  f.write("### Issues Found:\n")
+                  for issue in issues:
+                      f.write(f"- {issue}\n")
+              else:
+                  f.write("✅ No critical security issues found\n")
+          
+          print(f"Security Score: {score}/100")
+          print(f"Status: {security_report['status']}")
+          EOF
+          
+          echo "::endgroup::"
+      
+      - name: Upload Audit Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-audit-results-${{ env.AUDIT_TIMESTAMP }}
+          path: security-audit-results/
+          retention-days: 30
+      
+      - name: Send Security Report
+        if: github.event.inputs.send_report != 'false'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_ERROR_WEBHOOK }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK" ] && [ -f security-audit-results/security-score.json ]; then
+            
+            SCORE=$(cat security-audit-results/security-score.json | python3 -c "import sys, json; print(json.load(sys.stdin)['security_score'])")
+            STATUS=$(cat security-audit-results/security-score.json | python3 -c "import sys, json; print(json.load(sys.stdin)['status'])")
+            
+            # Slack通知のペイロード作成
+            if [ "$STATUS" = "PASS" ]; then
+              ICON="✅"
+              COLOR="good"
+            elif [ "$STATUS" = "WARNING" ]; then
+              ICON="⚠️"
+              COLOR="warning"
+            else
+              ICON="❌"
+              COLOR="danger"
+            fi
+            
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{
+                \"attachments\": [{
+                  \"color\": \"$COLOR\",
+                  \"title\": \"$ICON TimeTree Notifier v3.0 Security Audit\",
+                  \"text\": \"Security Score: $SCORE/100\\nStatus: $STATUS\",
+                  \"fields\": [
+                    {
+                      \"title\": \"Audit ID\",
+                      \"value\": \"${{ env.AUDIT_TIMESTAMP }}\",
+                      \"short\": true
+                    },
+                    {
+                      \"title\": \"Repository\",
+                      \"value\": \"${{ github.repository }}\",
+                      \"short\": true
+                    }
+                  ],
+                  \"footer\": \"GitHub Actions Security Audit\",
+                  \"ts\": $(date +%s)
+                }]
+              }" \
+              "$SLACK_WEBHOOK"
+          fi
+      
+      - name: Fail on Critical Issues
+        run: |
+          if [ -f security-audit-results/security-score.json ]; then
+            STATUS=$(cat security-audit-results/security-score.json | python3 -c "import sys, json; print(json.load(sys.stdin)['status'])")
+            
+            if [ "$STATUS" = "FAIL" ]; then
+              echo "❌ Critical security issues detected. Failing the workflow."
+              echo "Please review the security audit results and address the issues."
+              exit 1
+            else
+              echo "✅ Security audit completed successfully."
+            fi
+          fi

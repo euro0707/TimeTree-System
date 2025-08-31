@@ -1,0 +1,77 @@
+name: Deploy GAS Integration
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'gas/**'
+      - '.github/workflows/deploy-gas-integration.yml'
+  
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Deploy to environment (staging/production)'
+        required: true
+        default: 'staging'
+
+env:
+  GAS_PROJECT_ID_STAGING: ${{ secrets.GAS_PROJECT_ID_STAGING }}
+  GAS_PROJECT_ID_PRODUCTION: ${{ secrets.GAS_PROJECT_ID_PRODUCTION }}
+
+jobs:
+  deploy-gas:
+    name: Deploy Google Apps Script Integration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: gas/package-lock.json
+      
+      - name: Install clasp CLI
+        run: npm install -g @google/clasp
+      
+      - name: Setup clasp credentials
+        run: |
+          echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+      
+      - name: Install GAS dependencies
+        working-directory: gas
+        run: npm install
+      
+      - name: Build GAS project
+        working-directory: gas
+        run: |
+          npm run build
+          
+      - name: Deploy to GAS (Staging)
+        if: github.event.inputs.deploy_environment == 'staging' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        working-directory: gas
+        run: |
+          echo "Deploying to staging environment..."
+          clasp setting projectId ${{ env.GAS_PROJECT_ID_STAGING }}
+          clasp push --force
+          clasp deploy --description "Auto deployment from GitHub Actions - $(date)"
+      
+      - name: Deploy to GAS (Production)
+        if: github.event.inputs.deploy_environment == 'production'
+        working-directory: gas
+        run: |
+          echo "Deploying to production environment..."
+          clasp setting projectId ${{ env.GAS_PROJECT_ID_PRODUCTION }}
+          clasp push --force
+          clasp deploy --description "Production deployment - $(date)"
+      
+      - name: Test GAS deployment
+        run: |
+          echo "Testing GAS webhook endpoint..."
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{"test": true, "message": "Deployment test"}' \
+            "${{ secrets.GAS_WEBHOOK_URL }}" || echo "Test request sent"

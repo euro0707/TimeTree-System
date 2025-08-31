@@ -1,0 +1,476 @@
+name: TimeTree Daily Sync v3.0
+
+on:
+  schedule:
+    # 毎朝6:00 JST (21:00 UTC前日) に実行
+    - cron: '0 21 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: 'Target date for sync (YYYY-MM-DD format, default: today)'
+        required: false
+        default: ''
+      notification_channels:
+        description: 'Notification channels (comma-separated: line,gas,slack,discord)'
+        required: false
+        default: 'line,gas'
+      test_mode:
+        description: 'Run in test mode (no actual notifications)'
+        required: false
+        default: 'false'
+
+env:
+  PYTHON_VERSION: '3.13'
+  TIMEZONE: 'Asia/Tokyo'
+
+jobs:
+  timetree-sync:
+    name: TimeTree Sync & Multi-channel Notification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio aiohttp structlog cryptography
+      
+      - name: Set Environment Variables
+        run: |
+          echo "TARGET_DATE=${{ github.event.inputs.target_date || '' }}" >> $GITHUB_ENV
+          echo "NOTIFICATION_CHANNELS=${{ github.event.inputs.notification_channels || 'line,gas' }}" >> $GITHUB_ENV
+          echo "TEST_MODE=${{ github.event.inputs.test_mode || 'false' }}" >> $GITHUB_ENV
+          echo "SYNC_TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)" >> $GITHUB_ENV
+      
+      - name: Configure TimeZone
+        run: |
+          sudo timedatectl set-timezone ${{ env.TIMEZONE }}
+          date
+      
+      - name: Health Check - Dependencies
+        run: |
+          echo "::group::Python Environment Check"
+          python --version
+          pip list
+          echo "::endgroup::"
+          
+          echo "::group::System Resource Check"
+          df -h
+          free -h
+          echo "::endgroup::"
+      
+      - name: TimeTree Data Acquisition
+        id: data-acquisition
+        env:
+          TIMETREE_EMAIL: ${{ secrets.TIMETREE_EMAIL }}
+          TIMETREE_PASSWORD: ${{ secrets.TIMETREE_PASSWORD }}
+          TIMETREE_CALENDAR_CODE: ${{ secrets.TIMETREE_CALENDAR_CODE }}
+        run: |
+          echo "::group::TimeTree Data Acquisition"
+          
+          python -c "
+          import sys
+          sys.path.append('src')
+          
+          import asyncio
+          from datetime import datetime, date
+          from timetree_notifier.layers.data_acquisition.timetree_client import TimeTreeClient
+          from timetree_notifier.layers.data_acquisition.error_handler import ErrorHandler
+          import json
+          import os
+          
+          async def acquire_data():
+              try:
+                  # 設定読み込み
+                  config = {
+                      'email': os.getenv('TIMETREE_EMAIL'),
+                      'password': os.getenv('TIMETREE_PASSWORD'),
+                      'calendar_code': os.getenv('TIMETREE_CALENDAR_CODE')
+                  }
+                  
+                  # 対象日設定
+                  target_date = os.getenv('TARGET_DATE')
+                  if not target_date:
+                      target_date = date.today()
+                  else:
+                      target_date = datetime.strptime(target_date, '%Y-%m-%d').date()
+                  
+                  # TimeTreeクライアント初期化
+                  client = TimeTreeClient(config)
+                  error_handler = ErrorHandler()
+                  
+                  # データ取得
+                  print(f'Acquiring TimeTree events for {target_date}...')
+                  events = await client.get_events(target_date)
+                  
+                  print(f'Retrieved {len(events)} events')
+                  
+                  # 取得データの保存
+                  events_data = {
+                      'acquisition_time': datetime.now().isoformat(),
+                      'target_date': target_date.isoformat(),
+                      'total_events': len(events),
+                      'events': [
+                          {
+                              'id': event.id,
+                              'title': event.title,
+                              'start_time': event.start_time.isoformat() if event.start_time else None,
+                              'end_time': event.end_time.isoformat() if event.end_time else None,
+                              'is_all_day': event.is_all_day,
+                              'location': event.location,
+                              'description': event.description
+                          }
+                          for event in events
+                      ]
+                  }
+                  
+                  # artifacts用ディレクトリ作成
+                  os.makedirs('artifacts', exist_ok=True)
+                  
+                  # データファイル保存
+                  with open('artifacts/timetree_events.json', 'w', encoding='utf-8') as f:
+                      json.dump(events_data, f, ensure_ascii=False, indent=2)
+                  
+                  # GitHub Actions出力
+                  print(f'::set-output name=events_count::{len(events)}')
+                  print(f'::set-output name=target_date::{target_date}')
+                  print(f'::set-output name=success::true')
+                  
+                  return True
+                  
+              except Exception as e:
+                  print(f'Error in data acquisition: {str(e)}')
+                  print(f'::set-output name=success::false')
+                  print(f'::set-output name=error::{str(e)}')
+                  return False
+          
+          # 実行
+          success = asyncio.run(acquire_data())
+          if not success:
+              sys.exit(1)
+          "
+          
+          echo "::endgroup::"
+      
+      - name: Data Processing & Encoding Fix
+        id: data-processing
+        run: |
+          echo "::group::Data Processing"
+          
+          python -c "
+          import sys
+          sys.path.append('src')
+          
+          import json
+          from timetree_notifier.layers.data_processing.simple_encoding_handler import SimpleEncodingHandler
+          from timetree_notifier.layers.data_processing.event_processor import EventProcessor
+          
+          # 取得データの読み込み
+          with open('artifacts/timetree_events.json', 'r', encoding='utf-8') as f:
+              events_data = json.load(f)
+          
+          # エンコーディング修正
+          encoding_handler = SimpleEncodingHandler()
+          processor = EventProcessor()
+          
+          processed_events = []
+          for event in events_data['events']:
+              # タイトルと説明の文字化け修正
+              event['title'] = encoding_handler.fix_garbled_text(event['title'])
+              if event['description']:
+                  event['description'] = encoding_handler.fix_garbled_text(event['description'])
+              
+              processed_events.append(event)
+          
+          # 処理済みデータの保存
+          processed_data = {
+              'processing_time': datetime.now().isoformat(),
+              'original_events': len(events_data['events']),
+              'processed_events': len(processed_events),
+              'events': processed_events
+          }
+          
+          with open('artifacts/processed_events.json', 'w', encoding='utf-8') as f:
+              json.dump(processed_data, f, ensure_ascii=False, indent=2)
+          
+          print(f'Processed {len(processed_events)} events')
+          print(f'::set-output name=processed_count::{len(processed_events)}')
+          print(f'::set-output name=success::true')
+          "
+          
+          echo "::endgroup::"
+      
+      - name: Google Calendar Sync
+        id: google-sync
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
+        if: env.TEST_MODE != 'true'
+        run: |
+          echo "::group::Google Calendar Sync"
+          
+          python -c "
+          import sys
+          sys.path.append('src')
+          
+          import asyncio
+          import json
+          import os
+          from timetree_notifier.layers.sync_layer.google_calendar_sync import GoogleCalendarSyncManager
+          
+          async def sync_calendar():
+              try:
+                  # 処理済みイベントデータ読み込み
+                  with open('artifacts/processed_events.json', 'r', encoding='utf-8') as f:
+                      processed_data = json.load(f)
+                  
+                  # Google Calendar同期設定
+                  config = {
+                      'credentials_json': os.getenv('GOOGLE_CREDENTIALS'),
+                      'calendar_id': os.getenv('GOOGLE_CALENDAR_ID', 'primary'),
+                      'sync_prefix': '📱 ',
+                      'max_events_per_day': 50
+                  }
+                  
+                  # 同期実行
+                  sync_manager = GoogleCalendarSyncManager(config)
+                  events = processed_data['events']
+                  
+                  print(f'Syncing {len(events)} events to Google Calendar...')
+                  sync_result = await sync_manager.sync_events(events)
+                  
+                  # 同期結果の保存
+                  sync_summary = {
+                      'sync_time': datetime.now().isoformat(),
+                      'total_events': len(events),
+                      'synced_events': sync_result.synced_count,
+                      'updated_events': sync_result.updated_count,
+                      'failed_events': sync_result.failed_count,
+                      'success_rate': sync_result.success_rate,
+                      'conflicts_resolved': len(sync_result.conflicts_resolved)
+                  }
+                  
+                  with open('artifacts/sync_result.json', 'w', encoding='utf-8') as f:
+                      json.dump(sync_summary, f, ensure_ascii=False, indent=2)
+                  
+                  print(f'Sync completed: {sync_result.synced_count}/{len(events)} events')
+                  print(f'::set-output name=synced_count::{sync_result.synced_count}')
+                  print(f'::set-output name=success_rate::{sync_result.success_rate}')
+                  print(f'::set-output name=success::true')
+                  
+                  return True
+                  
+              except Exception as e:
+                  print(f'Error in Google Calendar sync: {str(e)}')
+                  print(f'::set-output name=success::false')
+                  print(f'::set-output name=error::{str(e)}')
+                  return False
+          
+          # 同期実行
+          success = asyncio.run(sync_calendar())
+          if not success:
+              sys.exit(1)
+          "
+          
+          echo "::endgroup::"
+      
+      - name: Multi-channel Notification
+        id: notification
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          GAS_WEBHOOK_URL: ${{ secrets.GAS_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        if: env.TEST_MODE != 'true'
+        run: |
+          echo "::group::Multi-channel Notification"
+          
+          python -c "
+          import sys
+          sys.path.append('src')
+          
+          import asyncio
+          import json
+          import os
+          from datetime import datetime, date
+          from timetree_notifier.layers.notification_layer.multi_channel_dispatcher import NotificationDispatcher
+          from timetree_notifier.layers.notification_layer.message_formatter import MessageFormatter
+          
+          async def send_notifications():
+              try:
+                  # 処理済みイベントデータ読み込み
+                  with open('artifacts/processed_events.json', 'r', encoding='utf-8') as f:
+                      processed_data = json.load(f)
+                  
+                  events = processed_data['events']
+                  target_date = date.today()
+                  
+                  # 通知チャンネル設定
+                  channels = os.getenv('NOTIFICATION_CHANNELS', 'line,gas').split(',')
+                  
+                  config = {
+                      'line': {
+                          'token': os.getenv('LINE_CHANNEL_ACCESS_TOKEN'),
+                          'user_id': os.getenv('LINE_USER_ID')
+                      } if 'line' in channels else None,
+                      'gas': {
+                          'webhook_url': os.getenv('GAS_WEBHOOK_URL')
+                      } if 'gas' in channels else None,
+                      'slack': {
+                          'webhook_url': os.getenv('SLACK_WEBHOOK_URL')
+                      } if 'slack' in channels else None,
+                      'discord': {
+                          'webhook_url': os.getenv('DISCORD_WEBHOOK_URL')
+                      } if 'discord' in channels else None
+                  }
+                  
+                  # 通知配信
+                  dispatcher = NotificationDispatcher()
+                  print(f'Sending notifications to {len(channels)} channels...')
+                  
+                  result = await dispatcher.send_to_all_channels(
+                      events=events,
+                      target_date=target_date,
+                      delivery_method='parallel'
+                  )
+                  
+                  # 通知結果の保存
+                  notification_summary = {
+                      'notification_time': datetime.now().isoformat(),
+                      'target_channels': channels,
+                      'total_channels': result.total_channels,
+                      'successful_deliveries': result.successful_deliveries,
+                      'failed_deliveries': result.failed_deliveries,
+                      'success_rate': result.success_rate
+                  }
+                  
+                  with open('artifacts/notification_result.json', 'w', encoding='utf-8') as f:
+                      json.dump(notification_summary, f, ensure_ascii=False, indent=2)
+                  
+                  print(f'Notification completed: {result.successful_deliveries}/{result.total_channels} channels')
+                  print(f'::set-output name=success_rate::{result.success_rate}')
+                  print(f'::set-output name=successful_channels::{result.successful_deliveries}')
+                  print(f'::set-output name=success::true')
+                  
+                  return True
+                  
+              except Exception as e:
+                  print(f'Error in multi-channel notification: {str(e)}')
+                  print(f'::set-output name=success::false')
+                  print(f'::set-output name=error::{str(e)}')
+                  return False
+          
+          # 通知実行
+          success = asyncio.run(send_notifications())
+          if not success:
+              sys.exit(1)
+          "
+          
+          echo "::endgroup::"
+      
+      - name: Generate Execution Report
+        id: report
+        if: always()
+        run: |
+          echo "::group::Execution Report Generation"
+          
+          python -c "
+          import json
+          import os
+          from datetime import datetime
+          
+          # 実行結果の集約
+          report = {
+              'execution_id': os.getenv('SYNC_TIMESTAMP'),
+              'execution_time': datetime.now().isoformat(),
+              'workflow_trigger': '${{ github.event_name }}',
+              'target_date': '${{ steps.data-acquisition.outputs.target_date }}',
+              'test_mode': os.getenv('TEST_MODE') == 'true',
+              
+              'data_acquisition': {
+                  'success': '${{ steps.data-acquisition.outputs.success }}' == 'true',
+                  'events_count': '${{ steps.data-acquisition.outputs.events_count }}',
+                  'error': '${{ steps.data-acquisition.outputs.error }}'
+              },
+              
+              'data_processing': {
+                  'success': '${{ steps.data-processing.outputs.success }}' == 'true',
+                  'processed_count': '${{ steps.data-processing.outputs.processed_count }}'
+              },
+              
+              'google_sync': {
+                  'success': '${{ steps.google-sync.outputs.success }}' == 'true',
+                  'synced_count': '${{ steps.google-sync.outputs.synced_count }}',
+                  'success_rate': '${{ steps.google-sync.outputs.success_rate }}',
+                  'error': '${{ steps.google-sync.outputs.error }}'
+              },
+              
+              'notification': {
+                  'success': '${{ steps.notification.outputs.success }}' == 'true',
+                  'successful_channels': '${{ steps.notification.outputs.successful_channels }}',
+                  'success_rate': '${{ steps.notification.outputs.success_rate }}',
+                  'error': '${{ steps.notification.outputs.error }}'
+              }
+          }
+          
+          # 全体成功判定
+          overall_success = all([
+              report['data_acquisition']['success'],
+              report['data_processing']['success'],
+              report['google_sync']['success'] or os.getenv('TEST_MODE') == 'true',
+              report['notification']['success'] or os.getenv('TEST_MODE') == 'true'
+          ])
+          
+          report['overall_success'] = overall_success
+          
+          # レポート保存
+          with open('artifacts/execution_report.json', 'w', encoding='utf-8') as f:
+              json.dump(report, f, ensure_ascii=False, indent=2)
+          
+          print(f'Overall Success: {overall_success}')
+          print(f'::set-output name=overall_success::{overall_success}')
+          
+          # サマリー表示
+          print('=== TimeTree Sync v3.0 Execution Summary ===')
+          print(f'Target Date: {report[\"target_date\"]}')
+          print(f'Events Retrieved: {report[\"data_acquisition\"][\"events_count\"]}')
+          if not report['test_mode']:
+              print(f'Calendar Sync: {report[\"google_sync\"][\"synced_count\"]} events')
+              print(f'Notifications: {report[\"notification\"][\"successful_channels\"]} channels')
+          print(f'Overall Status: {\"SUCCESS\" if overall_success else \"FAILED\"}')
+          "
+          
+          echo "::endgroup::"
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: timetree-sync-artifacts-${{ env.SYNC_TIMESTAMP }}
+          path: artifacts/
+          retention-days: 7
+      
+      - name: Failure Notification
+        if: failure()
+        env:
+          SLACK_ERROR_WEBHOOK: ${{ secrets.SLACK_ERROR_WEBHOOK }}
+        run: |
+          if [ -n "$SLACK_ERROR_WEBHOOK" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"🚨 TimeTree Sync v3.0 Failed\\n\\nExecution ID: $SYNC_TIMESTAMP\\nTime: $(date)\\nWorkflow: ${{ github.workflow }}\"}" \
+              "$SLACK_ERROR_WEBHOOK"
+          fi
