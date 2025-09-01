@@ -120,57 +120,36 @@ class SimpleTimeTreeNotifier:
         return self._get_test_events()
     
     def _try_timetree_exporter(self):
-        """TimeTree-Exporterによる取得試行"""
+        """既存のICSファイルから取得試行"""
         try:
-            import subprocess
-            import tempfile
             from pathlib import Path
             
-            print("🔧 TimeTree-Exporter実行中...")
+            print("🔧 既存ICSファイル確認中...")
             
-            # 一時ファイル作成
-            with tempfile.NamedTemporaryFile(suffix='.ics', delete=False) as tmp_file:
-                temp_path = tmp_file.name
+            # 既存のバックアップファイルを確認
+            backup_ics = Path("./data/backup.ics")
+            temp_ics = Path("./temp/timetree_export.ics")
             
-            # TimeTree-Exporterコマンド実行
-            cmd = [
-                'timetree-exporter',
-                '-o', temp_path,
-                '-e', self.timetree_email
-            ]
+            # 優先順位: 新しいファイル → バックアップファイル
+            for ics_file in [temp_ics, backup_ics]:
+                if ics_file.exists() and ics_file.stat().st_size > 0:
+                    print(f"✅ ICSファイル発見: {ics_file}")
+                    
+                    # ICSファイルをパース
+                    events = self._parse_ics_file(str(ics_file))
+                    
+                    if events:
+                        print(f"✅ ICSファイルから{len(events)}件の予定を取得")
+                        return events
+                    else:
+                        print(f"⚠️ {ics_file}に今日の予定なし")
+                        continue
             
-            # パスワードを環境変数で渡す
-            import os
-            env = os.environ.copy()
-            env['TIMETREE_PASSWORD'] = self.timetree_password
-            
-            result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
-                timeout=120,
-                env=env
-            )
-            
-            if result.returncode == 0:
-                print("✅ TimeTree-Exporter実行成功")
-                
-                # ICSファイルをパース
-                events = self._parse_ics_file(temp_path)
-                
-                # 一時ファイル削除
-                Path(temp_path).unlink(missing_ok=True)
-                
-                return events
-            else:
-                print(f"⚠️ TimeTree-Exporter失敗: {result.stderr}")
-                return None
-                
-        except subprocess.TimeoutExpired:
-            print("⚠️ TimeTree-Exporter タイムアウト")
+            print("⚠️ 利用可能なICSファイルが見つからない")
             return None
+                
         except Exception as e:
-            print(f"⚠️ TimeTree-Exporter エラー: {str(e)}")
+            print(f"⚠️ ICSファイル読み込みエラー: {str(e)}")
             return None
     
     def _try_web_api(self):
