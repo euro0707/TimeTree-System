@@ -88,6 +88,8 @@ class SimpleTimeTreeNotifier:
                 return True
             elif 'signin' in login_response.url:
                 print("❌ TimeTreeログイン失敗 - 認証情報を確認してください")
+                print(f"📍 リダイレクト先: {login_response.url}")
+                print("⚠️ フォールバックモードで継続します")
                 return False
             else:
                 print(f"✅ TimeTreeログイン成功 (リダイレクト: {login_response.url})")
@@ -236,10 +238,14 @@ class SimpleTimeTreeNotifier:
         """LINE通知送信"""
         if not self.line_token or not self.line_user_id:
             print("⚠️ LINE設定が不完全 - 通知をスキップ")
+            print(f"   TOKEN設定: {'✅' if self.line_token else '❌'}")
+            print(f"   USER_ID設定: {'✅' if self.line_user_id else '❌'}")
             return True
             
         try:
             print("📱 LINE通知送信中...")
+            print(f"   送信先ユーザーID: {self.line_user_id}")
+            print(f"   メッセージ長: {len(message)}文字")
             
             headers = {
                 'Authorization': f'Bearer {self.line_token}',
@@ -257,17 +263,28 @@ class SimpleTimeTreeNotifier:
             }
             
             url = 'https://api.line.me/v2/bot/message/push'
-            response = requests.post(url, headers=headers, json=data)
+            print(f"   API URL: {url}")
+            
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            
+            print(f"   レスポンス: {response.status_code}")
             
             if response.status_code == 200:
                 print("✅ LINE通知送信成功")
+                response_data = response.json() if response.text else {}
+                print(f"   応答データ: {response_data}")
                 return True
             else:
-                print(f"❌ LINE通知送信失敗: {response.status_code} - {response.text}")
+                print(f"❌ LINE通知送信失敗: {response.status_code}")
+                print(f"   エラー応答: {response.text}")
+                print(f"   応答ヘッダー: {dict(response.headers)}")
                 return False
                 
         except Exception as e:
             print(f"❌ LINE通知エラー: {str(e)}")
+            print(f"   エラー種類: {type(e).__name__}")
+            import traceback
+            print(f"   詳細トレース: {traceback.format_exc()}")
             return False
     
     def run(self):
