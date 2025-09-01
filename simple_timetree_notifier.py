@@ -20,6 +20,7 @@ class SimpleTimeTreeNotifier:
         self.line_user_id = os.getenv('LINE_USER_ID')
         
         self.session = requests.Session()
+        self.html_content = None  # Playwrightで取得したHTMLを保存
         
     def validate_config(self):
         """設定値の検証"""
@@ -38,11 +39,74 @@ class SimpleTimeTreeNotifier:
         return True
     
     def login_timetree(self):
-        """TimeTreeログイン (現在は無効化)"""
-        print("⚠️ TimeTree自動ログイン: JavaScript必須のSPAのため技術的に困難")
-        print("💡 推奨: 手動でTimeTreeアプリまたはWeb版を使用")
-        print("📂 ICSファイル手動取得後、data/backup.icsに配置すれば実データ通知可能")
-        return False
+        """TimeTreeログイン (Playwright自動化)"""
+        try:
+            print("🔐 TimeTree自動ログイン開始 (Playwright)")
+            
+            from playwright.sync_api import sync_playwright
+            import tempfile
+            import os
+            
+            with sync_playwright() as p:
+                # ヘッドレスブラウザ起動
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                )
+                page = context.new_page()
+                
+                # ログインページアクセス
+                print("📱 TimeTreeログインページアクセス中...")
+                page.goto('https://timetreeapp.com/signin', wait_until='networkidle')
+                
+                # メールアドレス入力
+                email_input = page.locator('input[type="email"], input[name="user[email]"], #user_email')
+                if email_input.count() > 0:
+                    email_input.fill(self.timetree_email)
+                    print("✅ メールアドレス入力完了")
+                else:
+                    print("❌ メールアドレス入力フィールド未発見")
+                    return False
+                
+                # パスワード入力
+                password_input = page.locator('input[type="password"], input[name="user[password]"], #user_password')
+                if password_input.count() > 0:
+                    password_input.fill(self.timetree_password)
+                    print("✅ パスワード入力完了")
+                else:
+                    print("❌ パスワード入力フィールド未発見")
+                    return False
+                
+                # ログインボタンクリック
+                login_btn = page.locator('button[type="submit"], input[type="submit"], button:has-text("ログイン"), button:has-text("Sign in")')
+                if login_btn.count() > 0:
+                    login_btn.click()
+                    print("✅ ログインボタンクリック")
+                    
+                    # ログイン完了待機
+                    page.wait_for_url('**/calendars**', timeout=15000)
+                    print("✅ TimeTreeログイン成功 (Playwright)")
+                    
+                    # カレンダーページに移動
+                    calendar_url = f'https://timetreeapp.com/calendars/{self.timetree_calendar_code}'
+                    page.goto(calendar_url, wait_until='networkidle')
+                    
+                    # HTMLコンテンツ取得
+                    html_content = page.content()
+                    browser.close()
+                    
+                    # 取得成功
+                    self.html_content = html_content
+                    return True
+                    
+                else:
+                    print("❌ ログインボタン未発見")
+                    browser.close()
+                    return False
+                    
+        except Exception as e:
+            print(f"❌ Playwright自動ログインエラー: {str(e)}")
+            return False
     
     def get_today_events(self):
         """今日の予定を取得"""
@@ -98,10 +162,68 @@ class SimpleTimeTreeNotifier:
             return None
     
     def _try_web_api(self):
-        """Web API による取得試行 (現在は無効化)"""
-        print("⚠️ TimeTree Web API: JavaScript必須のため自動ログイン不可")
-        print("💡 解決方法: 手動でTimeTreeからICSファイルを取得してdata/backup.icsに配置")
-        return None
+        """Web API による取得試行 (Playwright対応)"""
+        try:
+            if not hasattr(self, 'html_content') or not self.html_content:
+                print("⚠️ PlaywrightでHTMLが未取得")
+                return None
+            
+            from bs4 import BeautifulSoup
+            from datetime import date
+            
+            print("🔍 Playwrightで取得したHTMLから予定を解析中...")
+            soup = BeautifulSoup(self.html_content, 'html.parser')
+            today = date.today()
+            events = []
+            
+            # TimeTreeの予定要素を検索 (複数パターン)
+            event_selectors = [
+                '[data-testid*="event"]',
+                '.calendar-event',
+                '.event-item',
+                '[class*="event"]',
+                '[class*="schedule"]'
+            ]
+            
+            for selector in event_selectors:
+                event_elements = soup.select(selector)
+                if event_elements:
+                    print(f"✅ 予定要素発見: {selector} ({len(event_elements)}件)")
+                    
+                    for element in event_elements:
+                        try:
+                            # タイトル抽出
+                            title = element.get_text(strip=True)
+                            if title and len(title) > 2:
+                                events.append({
+                                    'title': title[:100],  # 100文字制限
+                                    'start_time': '',
+                                    'location': '',
+                                    'description': f'Playwright自動取得 ({today})'
+                                })
+                        except Exception:
+                            continue
+                    
+                    if events:
+                        break
+            
+            # 今日の日付文字列も検索
+            date_patterns = [
+                today.strftime('%Y年%m月%d日'),
+                today.strftime('%m/%d'),
+                today.strftime('%m月%d日')
+            ]
+            
+            for pattern in date_patterns:
+                if pattern in self.html_content:
+                    print(f"✅ 今日の日付確認: {pattern}")
+                    break
+            
+            return events[:10] if events else None  # 最大10件
+            
+        except Exception as e:
+            print(f"⚠️ Playwright HTML解析エラー: {str(e)}")
+            return None
     
     def _parse_ics_file(self, file_path):
         """ICSファイルから今日の予定を抽出"""

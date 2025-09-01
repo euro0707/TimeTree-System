@@ -1,8 +1,14 @@
-# TimeTree Simple Notifier - 最小依存関係
-# 必須パッケージのみ
+# TimeTree Simple Notifier - 自動化対応
+# ブラウザ自動化でTimeTree完全自動取得
 
 # HTTP通信
 requests>=2.28.0,<3.0.0
 
-# 日時処理 (標準ライブラリで十分だが安定性のため)
+# 日時処理
 python-dateutil>=2.8.0,<3.0.0
+
+# ブラウザ自動化 (JavaScript対応)
+playwright>=1.40.0
+
+# HTML解析
+beautifulsoup4>=4.12.0
