@@ -172,17 +172,49 @@ class SimpleTimeTreeNotifier:
             from datetime import date
             
             print("🔍 Playwrightで取得したHTMLから予定を解析中...")
+            
+            # デバッグ: HTMLを保存
+            try:
+                with open('temp/timetree_debug.html', 'w', encoding='utf-8') as f:
+                    f.write(self.html_content)
+                print("💾 デバッグ用HTMLファイル保存: temp/timetree_debug.html")
+            except Exception as e:
+                print(f"⚠️ HTMLファイル保存エラー: {e}")
+            
             soup = BeautifulSoup(self.html_content, 'html.parser')
             today = date.today()
             events = []
             
+            # HTML内容の基本情報を出力
+            print(f"📄 HTML長さ: {len(self.html_content)}文字")
+            print(f"📄 HTML内の今日の日付検索: {today.strftime('%Y-%m-%d')} / {today.strftime('%m/%d')} / {today.strftime('%m月%d日')}")
+            
+            # 全てのテキスト内容から今日の日付を検索
+            full_text = soup.get_text()
+            for date_pattern in [today.strftime('%Y-%m-%d'), today.strftime('%m/%d'), today.strftime('%m月%d日')]:
+                if date_pattern in full_text:
+                    print(f"✅ HTML内で日付発見: {date_pattern}")
+                else:
+                    print(f"⚠️ HTML内で日付未発見: {date_pattern}")
+            
             # TimeTreeの予定要素を検索 (複数パターン)
             event_selectors = [
+                # TimeTree特有のセレクター
                 '[data-testid*="event"]',
+                '[data-testid*="schedule"]', 
                 '.calendar-event',
                 '.event-item',
+                '.schedule-item',
                 '[class*="event"]',
-                '[class*="schedule"]'
+                '[class*="schedule"]',
+                '[class*="calendar"]',
+                # より広範囲な検索
+                'div[class*="title"]',
+                'span[class*="title"]',
+                'p[class*="title"]',
+                # 日付関連
+                'div:contains("' + today.strftime('%m/%d') + '")',
+                'div:contains("' + today.strftime('%m月%d日') + '")'
             ]
             
             for selector in event_selectors:
