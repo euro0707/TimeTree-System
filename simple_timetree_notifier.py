@@ -134,10 +134,9 @@ class SimpleTimeTreeNotifier:
             
             # TimeTree-Exporterコマンド実行
             cmd = [
-                'python', '-m', 'timetree_exporter',
+                'timetree-exporter',
                 '-o', temp_path,
-                '-e', self.timetree_email,
-                '-c', self.timetree_calendar_code
+                '-e', self.timetree_email
             ]
             
             # パスワードを環境変数で渡す
