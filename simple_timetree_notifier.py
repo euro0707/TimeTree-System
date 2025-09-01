@@ -38,66 +38,11 @@ class SimpleTimeTreeNotifier:
         return True
     
     def login_timetree(self):
-        """TimeTreeにログイン"""
-        try:
-            print("🔐 TimeTreeにログイン中...")
-            
-            # User-Agentヘッダーを設定
-            self.session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            })
-            
-            # ログインページにアクセス
-            login_url = "https://timetreeapp.com/signin"
-            response = self.session.get(login_url)
-            
-            if response.status_code != 200:
-                print(f"❌ ログインページアクセス失敗: {response.status_code}")
-                return False
-            
-            # CSRFトークンを抽出
-            csrf_token = None
-            if 'csrf-token' in response.text:
-                import re
-                csrf_match = re.search(r'csrf-token["\']?\s*content=["\']([^"\']+)', response.text)
-                if csrf_match:
-                    csrf_token = csrf_match.group(1)
-                    print(f"✅ CSRFトークン取得: {csrf_token[:20]}...")
-            
-            # ログイン実行
-            login_data = {
-                'user[email]': self.timetree_email,
-                'user[password]': self.timetree_password,
-                'commit': 'ログイン'
-            }
-            
-            # CSRFトークンを追加
-            if csrf_token:
-                login_data['authenticity_token'] = csrf_token
-            
-            # ログインPOST
-            login_response = self.session.post(
-                'https://timetreeapp.com/signin',
-                data=login_data,
-                allow_redirects=True
-            )
-            
-            # ログイン成功判定
-            if login_response.status_code == 200 and 'calendars' in login_response.url:
-                print("✅ TimeTreeログイン成功")
-                return True
-            elif 'signin' in login_response.url:
-                print("❌ TimeTreeログイン失敗 - 認証情報を確認してください")
-                print(f"📍 リダイレクト先: {login_response.url}")
-                print("⚠️ フォールバックモードで継続します")
-                return False
-            else:
-                print(f"✅ TimeTreeログイン成功 (リダイレクト: {login_response.url})")
-                return True
-                
-        except Exception as e:
-            print(f"❌ TimeTreeログインエラー: {str(e)}")
-            return False
+        """TimeTreeログイン (現在は無効化)"""
+        print("⚠️ TimeTree自動ログイン: JavaScript必須のSPAのため技術的に困難")
+        print("💡 推奨: 手動でTimeTreeアプリまたはWeb版を使用")
+        print("📂 ICSファイル手動取得後、data/backup.icsに配置すれば実データ通知可能")
+        return False
     
     def get_today_events(self):
         """今日の予定を取得"""
@@ -153,25 +98,10 @@ class SimpleTimeTreeNotifier:
             return None
     
     def _try_web_api(self):
-        """Web API による取得試行 (既存の方法)"""
-        try:
-            today = date.today()
-            
-            # カレンダーページにアクセス
-            calendar_url = f"https://timetreeapp.com/calendars/{self.timetree_calendar_code}"
-            response = self.session.get(calendar_url)
-            
-            if response.status_code != 200:
-                print(f"⚠️ カレンダーアクセス失敗: {response.status_code}")
-                return None
-            
-            # HTMLから予定を抽出
-            events = self._parse_events_from_html(response.text, today)
-            return events if events else None
-            
-        except Exception as e:
-            print(f"⚠️ Web API エラー: {str(e)}")
-            return None
+        """Web API による取得試行 (現在は無効化)"""
+        print("⚠️ TimeTree Web API: JavaScript必須のため自動ログイン不可")
+        print("💡 解決方法: 手動でTimeTreeからICSファイルを取得してdata/backup.icsに配置")
+        return None
     
     def _parse_ics_file(self, file_path):
         """ICSファイルから今日の予定を抽出"""
@@ -237,22 +167,22 @@ class SimpleTimeTreeNotifier:
         
         return [
             {
-                'title': '📱 TimeTree同期テスト',
+                'title': '⚠️ TimeTree自動同期停止中',
+                'start_time': '08:00',
+                'location': 'システム通知',
+                'description': f'TimeTree SPAへの変更により自動ログイン不可 ({current_time})'
+            },
+            {
+                'title': '💡 手動データ更新が必要', 
+                'start_time': '08:30',
+                'location': 'data/backup.ics',
+                'description': 'TimeTreeから手動でICSエクスポート → data/backup.icsに配置'
+            },
+            {
+                'title': '🔧 システム正常動作中',
                 'start_time': '09:00',
                 'location': 'GitHub Actions',
-                'description': f'システム正常動作確認 ({current_time}実行)'
-            },
-            {
-                'title': '🔧 Simple Notifier動作確認', 
-                'start_time': '14:00',
-                'location': 'クラウド環境',
-                'description': 'フォールバックモードでLINE通知テスト'
-            },
-            {
-                'title': '🎉 Phase 2B完了予定',
-                'start_time': '18:00',
-                'location': '',
-                'description': 'TimeTree Simple Notifier基本機能確認完了'
+                'description': 'LINE通知機能は正常 - データ取得のみ課題'
             }
         ]
     
