@@ -101,9 +101,82 @@ class SimpleTimeTreeNotifier:
     
     def get_today_events(self):
         """今日の予定を取得"""
-        try:
-            print("📅 今日の予定を取得中...")
+        print("📅 今日の予定を取得中...")
+        
+        # Method 1: TimeTree-Exporter実行試行
+        events = self._try_timetree_exporter()
+        if events:
+            print(f"✅ TimeTree-Exporterで{len(events)}件取得")
+            return events
+        
+        # Method 2: Web API試行 (既存)
+        events = self._try_web_api()
+        if events:
+            print(f"✅ Web APIで{len(events)}件取得")
+            return events
             
+        # Method 3: フォールバック
+        print("⚠️ 全ての取得方法が失敗 - フォールバックデータを使用")
+        return self._get_test_events()
+    
+    def _try_timetree_exporter(self):
+        """TimeTree-Exporterによる取得試行"""
+        try:
+            import subprocess
+            import tempfile
+            from pathlib import Path
+            
+            print("🔧 TimeTree-Exporter実行中...")
+            
+            # 一時ファイル作成
+            with tempfile.NamedTemporaryFile(suffix='.ics', delete=False) as tmp_file:
+                temp_path = tmp_file.name
+            
+            # TimeTree-Exporterコマンド実行
+            cmd = [
+                'python', '-m', 'timetree_exporter',
+                '-o', temp_path,
+                '-e', self.timetree_email,
+                '-c', self.timetree_calendar_code
+            ]
+            
+            # パスワードを環境変数で渡す
+            import os
+            env = os.environ.copy()
+            env['TIMETREE_PASSWORD'] = self.timetree_password
+            
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                timeout=120,
+                env=env
+            )
+            
+            if result.returncode == 0:
+                print("✅ TimeTree-Exporter実行成功")
+                
+                # ICSファイルをパース
+                events = self._parse_ics_file(temp_path)
+                
+                # 一時ファイル削除
+                Path(temp_path).unlink(missing_ok=True)
+                
+                return events
+            else:
+                print(f"⚠️ TimeTree-Exporter失敗: {result.stderr}")
+                return None
+                
+        except subprocess.TimeoutExpired:
+            print("⚠️ TimeTree-Exporter タイムアウト")
+            return None
+        except Exception as e:
+            print(f"⚠️ TimeTree-Exporter エラー: {str(e)}")
+            return None
+    
+    def _try_web_api(self):
+        """Web API による取得試行 (既存の方法)"""
+        try:
             today = date.today()
             
             # カレンダーページにアクセス
@@ -112,23 +185,72 @@ class SimpleTimeTreeNotifier:
             
             if response.status_code != 200:
                 print(f"⚠️ カレンダーアクセス失敗: {response.status_code}")
-                print("テストデータを使用します")
-                return self._get_test_events()
+                return None
             
             # HTMLから予定を抽出
             events = self._parse_events_from_html(response.text, today)
+            return events if events else None
             
-            if not events:
-                print("⚠️ 予定の解析に失敗 - テストデータを使用")
-                return self._get_test_events()
+        except Exception as e:
+            print(f"⚠️ Web API エラー: {str(e)}")
+            return None
+    
+    def _parse_ics_file(self, file_path):
+        """ICSファイルから今日の予定を抽出"""
+        try:
+            from datetime import datetime
+            import re
             
-            print(f"✅ {len(events)}件の予定を取得")
+            today = date.today()
+            events = []
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # ICS形式の簡易パース (icalendarライブラリなしで)
+            # VEVENT...END:VEVENT のブロックを抽出
+            event_blocks = re.findall(r'BEGIN:VEVENT(.*?)END:VEVENT', content, re.DOTALL)
+            
+            for block in event_blocks:
+                event_data = {}
+                
+                # SUMMARY (タイトル) 抽出
+                summary_match = re.search(r'SUMMARY:(.*)', block)
+                if summary_match:
+                    event_data['title'] = summary_match.group(1).strip()
+                
+                # DTSTART (開始時間) 抽出
+                dtstart_match = re.search(r'DTSTART[^:]*:(.*)', block)
+                if dtstart_match:
+                    dtstart = dtstart_match.group(1).strip()
+                    
+                    # 今日の予定かチェック
+                    if today.strftime('%Y%m%d') in dtstart:
+                        # 時間抽出
+                        if 'T' in dtstart:
+                            time_part = dtstart.split('T')[1][:4]
+                            hour = int(time_part[:2])
+                            minute = int(time_part[2:])
+                            event_data['start_time'] = f"{hour:02d}:{minute:02d}"
+                        else:
+                            event_data['start_time'] = ''
+                        
+                        # LOCATION 抽出
+                        location_match = re.search(r'LOCATION:(.*)', block)
+                        event_data['location'] = location_match.group(1).strip() if location_match else ''
+                        
+                        # DESCRIPTION 抽出
+                        desc_match = re.search(r'DESCRIPTION:(.*)', block)
+                        event_data['description'] = desc_match.group(1).strip() if desc_match else ''
+                        
+                        if 'title' in event_data:
+                            events.append(event_data)
+            
             return events
             
         except Exception as e:
-            print(f"❌ 予定取得エラー: {str(e)}")
-            print("テストデータを使用します")
-            return self._get_test_events()
+            print(f"⚠️ ICSファイル解析エラー: {str(e)}")
+            return None
     
     def _get_test_events(self):
         """フォールバック用テストデータ"""

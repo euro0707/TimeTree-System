@@ -7639,3 +7639,8 @@ EOFError: EOF when reading a line
 2025-08-31 06:12:09 | DEBUG    | timetree_notifier.core.daily_notifier:_backup_ics_file:312 - ICS file backed up to data\backup.ics
 2025-08-31 06:12:09 | INFO     | __main__:run_manual_notification:107 - Manual notification completed successfully
 2025-08-31 06:12:09 | INFO     | __main__:run_manual:181 - Manual notification completed successfully
+2025-09-01 06:00:00 | INFO     | timetree_notifier.core.scheduler:_execute_daily_summary:91 - Starting daily summary execution
+2025-09-01 06:00:00 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:34 - Starting daily summary for 2025-09-01
+2025-09-01 06:00:02 | INFO     | timetree_notifier.core.daily_notifier:_extract_today_events:166 - Extracted 0 events for 2025-09-01
+2025-09-01 06:00:02 | INFO     | timetree_notifier.core.daily_notifier:send_daily_summary:53 - Daily summary sent successfully for 2025-09-01
+2025-09-01 06:00:02 | INFO     | timetree_notifier.core.scheduler:_execute_daily_summary:96 - Daily summary completed successfully
