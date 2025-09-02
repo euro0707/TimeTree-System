@@ -7,9 +7,6 @@ requests>=2.28.0,<3.0.0
 # 日時処理
 python-dateutil>=2.8.0,<3.0.0
 
-# タイムゾーン処理
-pytz>=2023.0
-
 # ブラウザ自動化 (JavaScript対応)
 playwright>=1.40.0
 

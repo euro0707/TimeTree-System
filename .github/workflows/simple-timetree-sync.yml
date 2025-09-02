@@ -47,7 +47,7 @@ jobs:
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
           TEST_MODE: ${{ github.event.inputs.test_mode || 'true' }}
         run: |
-          echo "🚀 Simple TimeTree Notifier 実行開始 (v2025.09.03-timezone-fix)"
+          echo "🚀 Simple TimeTree Notifier 実行開始 (v2025.09.03-stdlib-timezone)"
           python simple_timetree_notifier.py
           
           if [ $? -eq 0 ]; then
