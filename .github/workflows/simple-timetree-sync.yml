@@ -16,7 +16,7 @@ jobs:
   simple-sync:
     name: Simple TimeTree to LINE Notification
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     
     steps:
       - name: Checkout Repository

@@ -94,25 +94,18 @@ class SimpleTimeTreeNotifier:
                     
                     # 追加待機: 動的コンテンツ読み込み完了まで待つ
                     print("⏳ カレンダーコンテンツ読み込み待機中...")
-                    page.wait_for_timeout(5000)  # 5秒待機
+                    page.wait_for_timeout(3000)  # 3秒に短縮
                     
-                    # 予定要素が表示されるまで待機（複数パターン）
-                    wait_selectors = [
-                        '[data-testid*="event"]',
-                        '.calendar-event', 
-                        '[class*="event"]',
-                        '[class*="schedule"]'
-                    ]
+                    # タイムアウト対策: 予定要素待機を短縮
+                    print("🔍 予定要素検索中...")
+                    found_element = False
                     
-                    for selector in wait_selectors:
-                        try:
-                            page.wait_for_selector(selector, timeout=3000)
-                            print(f"✅ 予定要素読み込み確認: {selector}")
-                            break
-                        except:
-                            continue
-                    else:
-                        print("⚠️ 予定要素未発見 - HTMLを取得して分析")
+                    try:
+                        page.wait_for_selector('body', timeout=2000)  # まずbodyが読み込まれるまで
+                        print("✅ ページ基本構造読み込み完了")
+                        found_element = True
+                    except:
+                        print("⚠️ ページ読み込みタイムアウト - そのまま継続")
                     
                     # 最終HTMLコンテンツ取得
                     html_content = page.content()
