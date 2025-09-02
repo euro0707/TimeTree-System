@@ -186,9 +186,14 @@ class SimpleTimeTreeNotifier:
                 return None
             
             from bs4 import BeautifulSoup
-            from datetime import date
+            from datetime import datetime
+            import pytz
             
             print("🔍 Playwrightで取得したHTMLから予定を解析中...")
+            
+            # 日本時間で今日の日付を取得
+            jst = pytz.timezone('Asia/Tokyo')
+            today = datetime.now(jst).date()
             
             # デバッグ: HTMLを保存
             try:
