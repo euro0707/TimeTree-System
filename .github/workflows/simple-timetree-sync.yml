@@ -30,7 +30,8 @@ jobs:
       - name: Install Simple Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r simple_requirements.txt
+          pip install --no-cache-dir -r simple_requirements.txt
+          echo "✅ 依存関係強制更新: pytz追加"
       
       - name: Install Playwright Browsers
         run: |
@@ -46,7 +47,7 @@ jobs:
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
           TEST_MODE: ${{ github.event.inputs.test_mode || 'true' }}
         run: |
-          echo "🚀 Simple TimeTree Notifier 実行開始 (v2025.09.03)"
+          echo "🚀 Simple TimeTree Notifier 実行開始 (v2025.09.03-timezone-fix)"
           python simple_timetree_notifier.py
           
           if [ $? -eq 0 ]; then
