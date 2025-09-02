@@ -89,10 +89,34 @@ class SimpleTimeTreeNotifier:
                     
                     # カレンダーページに移動
                     calendar_url = f'https://timetreeapp.com/calendars/{self.timetree_calendar_code}'
+                    print(f"📅 カレンダーページアクセス: {calendar_url}")
                     page.goto(calendar_url, wait_until='networkidle')
                     
-                    # HTMLコンテンツ取得
+                    # 追加待機: 動的コンテンツ読み込み完了まで待つ
+                    print("⏳ カレンダーコンテンツ読み込み待機中...")
+                    page.wait_for_timeout(5000)  # 5秒待機
+                    
+                    # 予定要素が表示されるまで待機（複数パターン）
+                    wait_selectors = [
+                        '[data-testid*="event"]',
+                        '.calendar-event', 
+                        '[class*="event"]',
+                        '[class*="schedule"]'
+                    ]
+                    
+                    for selector in wait_selectors:
+                        try:
+                            page.wait_for_selector(selector, timeout=3000)
+                            print(f"✅ 予定要素読み込み確認: {selector}")
+                            break
+                        except:
+                            continue
+                    else:
+                        print("⚠️ 予定要素未発見 - HTMLを取得して分析")
+                    
+                    # 最終HTMLコンテンツ取得
                     html_content = page.content()
+                    print(f"📄 HTML取得完了: {len(html_content)}文字")
                     browser.close()
                     
                     # 取得成功
@@ -218,26 +242,49 @@ class SimpleTimeTreeNotifier:
             ]
             
             for selector in event_selectors:
-                event_elements = soup.select(selector)
-                if event_elements:
-                    print(f"✅ 予定要素発見: {selector} ({len(event_elements)}件)")
+                try:
+                    event_elements = soup.select(selector)
+                    print(f"🔍 セレクター試行: {selector} → {len(event_elements)}件")
                     
-                    for element in event_elements:
-                        try:
-                            # タイトル抽出
-                            title = element.get_text(strip=True)
-                            if title and len(title) > 2:
-                                events.append({
-                                    'title': title[:100],  # 100文字制限
-                                    'start_time': '',
-                                    'location': '',
-                                    'description': f'Playwright自動取得 ({today})'
-                                })
-                        except Exception:
-                            continue
-                    
-                    if events:
-                        break
+                    if event_elements:
+                        print(f"✅ 予定要素発見: {selector} ({len(event_elements)}件)")
+                        
+                        for i, element in enumerate(event_elements[:10]):  # 最大10件
+                            try:
+                                # タイトル抽出
+                                title = element.get_text(strip=True)
+                                print(f"📝 要素{i+1}: '{title[:50]}...'")
+                                
+                                if title and len(title) > 2 and not title.isspace():
+                                    events.append({
+                                        'title': title[:100],  # 100文字制限
+                                        'start_time': '',
+                                        'location': '',
+                                        'description': f'Playwright自動取得 ({today})'
+                                    })
+                                    print(f"✅ 予定追加: {title[:30]}...")
+                            except Exception as e:
+                                print(f"⚠️ 要素解析エラー: {e}")
+                                continue
+                        
+                        if events:
+                            break
+                except Exception as e:
+                    print(f"⚠️ セレクターエラー: {selector} - {e}")
+                    continue
+            
+            # 予定が見つからない場合、HTMLの構造をより詳しく分析
+            if not events:
+                print("🔍 HTMLテキスト内容分析（最初の500文字）:")
+                print(f"'{full_text[:500]}...'")
+                
+                # よりシンプルな検索
+                all_divs = soup.find_all('div')
+                print(f"📊 div要素総数: {len(all_divs)}件")
+                
+                # テキストのある要素を検索
+                text_elements = [div for div in all_divs if div.get_text(strip=True) and len(div.get_text(strip=True)) > 5]
+                print(f"📊 テキスト要素: {len(text_elements)}件")
             
             # 今日の日付文字列も検索
             date_patterns = [
