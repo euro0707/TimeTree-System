@@ -21,6 +21,12 @@ class SimpleTimeTreeNotifier:
         
         self.session = requests.Session()
         self.html_content = None  # Playwrightで取得したHTMLを保存
+    
+    def _get_today_jst(self):
+        """日本時間での今日の日付を取得"""
+        from datetime import datetime, timezone, timedelta
+        jst = timezone(timedelta(hours=9))
+        return datetime.now(jst).date()
         
     def validate_config(self):
         """設定値の検証"""
@@ -190,9 +196,8 @@ class SimpleTimeTreeNotifier:
             
             print("🔍 Playwrightで取得したHTMLから予定を解析中...")
             
-            # 日本時間で今日の日付を取得 (pytz不要)
-            jst = timezone(timedelta(hours=9))
-            today = datetime.now(jst).date()
+            # 日本時間で今日の日付を取得
+            today = self._get_today_jst()
             print(f"🌏 日本時間基準の日付: {today}")
             
             # デバッグ: HTMLを保存
@@ -204,7 +209,7 @@ class SimpleTimeTreeNotifier:
                 print(f"⚠️ HTMLファイル保存エラー: {e}")
             
             soup = BeautifulSoup(self.html_content, 'html.parser')
-            today = date.today()
+            # today は既に日本時間で取得済みなのでそのまま使用
             events = []
             
             # HTML内容の基本情報を出力
@@ -352,10 +357,11 @@ class SimpleTimeTreeNotifier:
     def _parse_ics_file(self, file_path):
         """ICSファイルから今日の予定を抽出"""
         try:
-            from datetime import datetime
+            from datetime import datetime, timezone, timedelta
             import re
             
-            today = date.today()
+            # 日本時間で今日の日付を取得
+            today = self._get_today_jst()
             events = []
             
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -581,8 +587,8 @@ class SimpleTimeTreeNotifier:
         # 今日の予定取得
         events = self.get_today_events()
         
-        # メッセージ作成
-        today = date.today()
+        # メッセージ作成（日本時間で日付取得）
+        today = self._get_today_jst()
         message = self.format_line_message(events, today)
         
         print("\n📝 送信メッセージ:")
