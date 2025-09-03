@@ -273,16 +273,63 @@ class SimpleTimeTreeNotifier:
             
             # 予定が見つからない場合、HTMLの構造をより詳しく分析
             if not events:
-                print("🔍 HTMLテキスト内容分析（最初の500文字）:")
-                print(f"'{full_text[:500]}...'")
+                print("🔍 HTMLテキスト内容分析（最初の1000文字）:")
+                print(f"'{full_text[:1000]}...'")
                 
-                # よりシンプルな検索
-                all_divs = soup.find_all('div')
-                print(f"📊 div要素総数: {len(all_divs)}件")
+                # HTMLタグの使用状況を確認
+                import re
                 
-                # テキストのある要素を検索
-                text_elements = [div for div in all_divs if div.get_text(strip=True) and len(div.get_text(strip=True)) > 5]
-                print(f"📊 テキスト要素: {len(text_elements)}件")
+                # 重要なタグの出現回数をカウント
+                tag_counts = {
+                    'div': len(soup.find_all('div')),
+                    'span': len(soup.find_all('span')),
+                    'p': len(soup.find_all('p')),
+                    'li': len(soup.find_all('li')),
+                    'article': len(soup.find_all('article')),
+                    'section': len(soup.find_all('section'))
+                }
+                
+                print(f"📊 HTMLタグ統計: {tag_counts}")
+                
+                # クラス名の分析（上位20個）
+                all_elements = soup.find_all(class_=True)
+                class_names = []
+                for elem in all_elements:
+                    if elem.get('class'):
+                        class_names.extend(elem.get('class'))
+                
+                from collections import Counter
+                if class_names:
+                    common_classes = Counter(class_names).most_common(20)
+                    print(f"📊 頻出クラス名（上位20個）: {common_classes}")
+                
+                # data-testidの分析
+                testid_elements = soup.find_all(attrs={'data-testid': True})
+                if testid_elements:
+                    testids = [elem.get('data-testid') for elem in testid_elements]
+                    print(f"📊 data-testid一覧: {testids[:20]}")
+                
+                # 今日の日付が含まれる要素の直接検索
+                date_patterns = [
+                    today.strftime('%Y-%m-%d'),
+                    today.strftime('%m/%d'), 
+                    today.strftime('%m月%d日'),
+                    today.strftime('%d'),
+                    str(today.day)
+                ]
+                
+                print("🔍 日付パターンを含む要素検索:")
+                for pattern in date_patterns:
+                    elements_with_date = soup.find_all(string=re.compile(pattern))
+                    if elements_with_date:
+                        print(f"✅ '{pattern}' を含む要素: {len(elements_with_date)}件")
+                        # 親要素の情報も表示
+                        for elem in elements_with_date[:3]:  # 上位3件
+                            parent = elem.parent if elem.parent else None
+                            if parent:
+                                print(f"   親要素: <{parent.name}> class='{parent.get('class')}' id='{parent.get('id')}'")
+                    else:
+                        print(f"⚠️ '{pattern}' を含む要素: 0件")
             
             # 今日の日付文字列も検索
             date_patterns = [
