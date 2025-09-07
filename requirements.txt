@@ -1,40 +1,8 @@
-# TimeTree Notifier v3.0 - Cloud Dependencies
-# Core dependencies
-aiohttp>=3.8.0,<4.0.0
-asyncio-throttle>=1.0.0,<2.0.0
-python-dateutil>=2.8.0,<3.0.0
-
-# Data processing
-beautifulsoup4>=4.11.0,<5.0.0
-html5lib>=1.1,<2.0.0
-chardet>=5.0.0,<6.0.0
-
-# Encryption and security
-cryptography>=40.0.0,<42.0.0
-pyyaml>=6.0,<7.0
-
-# Logging and monitoring
-structlog>=22.0.0,<24.0.0
-
-# Google APIs
-google-auth>=2.17.0,<3.0.0
-google-auth-oauthlib>=1.0.0,<2.0.0
-google-auth-httplib2>=0.1.0,<1.0.0
-google-api-python-client>=2.80.0,<3.0.0
-
-# Database
-aiosqlite>=0.18.0,<1.0.0
-
-# HTTP client improvements
-httpx>=0.24.0,<1.0.0
-urllib3>=1.26.0,<2.0.0
-
-# Development and testing (optional)
-pytest>=7.0.0,<8.0.0
-pytest-asyncio>=0.21.0,<1.0.0
-
-# Environment management
-python-dotenv>=1.0.0,<2.0.0
-
-# Time handling
-pytz>=2023.3
+icalendar>=5.0.0
+requests>=2.31.0
+tzdata>=2024.1
+# timetree-exporter の PyPI パッケージ（CLI を提供）
+timetree-exporter
+# 安定後にバージョン固定を検討（例: ==5.0.12 等）
+# timetree-exporter は CLI として別途インストールされる想定
+# （上流の配布形態により名前が異なる場合があります）

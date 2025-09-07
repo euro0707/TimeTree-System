@@ -1,0 +1,93 @@
+name: Morning TimeTree
+
+on:
+  schedule:
+    # 21:00 UTC = 06:00 JST
+    - cron: "0 21 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "任意の日付 (YYYY-MM-DD, JST)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: morning-timetree
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Tokyo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Export TimeTree ICS
+        # timetree-exporter のCLI引数はバージョンにより異なる可能性があります。
+        # 必要に応じてこのコマンドを調整してください。
+        shell: bash
+        env:
+          TIMETREE_EMAIL: ${{ secrets.TIMETREE_EMAIL }}
+          TIMETREE_PASSWORD: ${{ secrets.TIMETREE_PASSWORD }}
+          TIMETREE_CALENDAR_CODE: ${{ secrets.TIMETREE_CALENDAR_CODE }}
+        run: |
+          set -euo pipefail
+          # 例: 一般的な使い方の想定。必要に応じて --help を参照して引数を調整してください。
+          if command -v timetree-exporter >/dev/null 2>&1; then
+            timetree-exporter \
+              --email "$TIMETREE_EMAIL" \
+              --password "$TIMETREE_PASSWORD" \
+              --calendar "$TIMETREE_CALENDAR_CODE" \
+              --output calendar.ics || true
+          fi
+          # Fallback: module 実行（配布形態によってはCLI名が異なる場合がある）
+          if [ ! -f calendar.ics ]; then
+            python -m timetree_exporter \
+              --email "$TIMETREE_EMAIL" \
+              --password "$TIMETREE_PASSWORD" \
+              --calendar "$TIMETREE_CALENDAR_CODE" \
+              --output calendar.ics || true
+          fi
+          if [ ! -f calendar.ics ]; then
+            echo "calendar.ics が生成されませんでした。timetree-exporter のインストール/引数をご確認ください。" >&2
+            exit 1
+          fi
+
+      - name: Send LINE notification
+        shell: bash
+        env:
+          LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          set -euo pipefail
+          DATE_OPT=""
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            DATE_OPT="--date ${{ github.event.inputs.date }}"
+          fi
+          # Prefer Messaging API when both secrets are present
+          EXTRA="--line-mode notify"
+          if [ -n "${LINE_CHANNEL_ACCESS_TOKEN:-}" ] && [ -n "${LINE_USER_ID:-}" ]; then
+            EXTRA="--line-mode messaging --line-channel-access-token \"$LINE_CHANNEL_ACCESS_TOKEN\" --line-user-id \"$LINE_USER_ID\""
+          fi
+          python notify.py --ics calendar.ics $DATE_OPT $EXTRA
+
+      - name: Cleanup ICS
+        if: always()
+        run: |
+          rm -f calendar.ics || true
